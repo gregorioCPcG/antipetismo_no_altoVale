@@ -827,3 +827,69 @@ min <- (82.5*previ_min)/89.61
 max
 meio
 min
+b <- runif(n=10000, min=53.37, max=73.72)
+summary(b)
+sd(b)
+b <- rnorm(n=10000, mean=63.62,sd=5.83)
+hist(b, xlab="Previsão",ylab="",main="Intervalo Bolsonaro Alto Vale Segundo Turno em 21 de Março")
+boxplot(b)
+summary(b)
+b2 <- data.frame(b)
+b3 <- ggplot(b2, aes(b))
+b3 <- b3 + geom_histogram(binwidth=1)
+b3 + labs(title = "Previsão Bolsonaro segundo turno Alto Vale",
+          subtitle = "Estimativas simuladas",
+          x = "", y = "Previsões", caption = "Previsão com dados disponíveis até 21 de Março de 2022")
+library(RColorBrewer)
+b3 + scale_fill_brewer(palette="Set3")+ labs(title = "Previsão Bolsonaro segundo turno Alto Vale",
+          subtitle = "Estimativas simuladas",
+          x = "", y = "Previsões", 
+          caption = "Previsão com dados disponíveis até 21 de Março de 2022")+theme_blank()
+  
+b2 <- a2
+a <- b
+a <- data.frame(a)
+n <- 1000
+samp <- sample_n(a, n)
+library(statsr)
+library(dplyr)
+samp %>%
+  dplyr::summarise (mean_samp60 = mean(a), med_s60 = median(a),
+             se_s60 = sd(a))
+#confidence 95%
+z_star_95 <- qnorm(0.975)
+z_star_95
+samp %>%
+  dplyr::summarise(lower = mean(a) - z_star_95 * (sd(a) / sqrt(n)),
+            upper = mean(a) + z_star_95 * (sd(a) / sqrt(n)))
+
+# confidence levels
+params <- a %>%
+  dplyr::summarise(mu = mean(a))
+
+samp %>%
+  dplyr::summarise(samp_min = min(a), samp1_max = max(a))
+
+
+
+ci <- a %>%
+  rep_sample_n(size = n, reps = 50, replace = TRUE) %>%
+  dplyr::summarise(lower = mean(a) - z_star_95 * (sd(a) / sqrt(n)),
+            upper = mean(a) + z_star_95 * (sd(a) / sqrt(n)))
+ci %>%
+  slice(1:5) # só pra ver
+ci <- ci %>%
+  mutate(capture_mu = ifelse(lower < params$mu & upper > params$mu, "yes", "no"))
+ci %>%
+  slice(1:20) # só pra ver
+
+ci_data <- data.frame(ci_id = c(1:50, 1:50),
+                      ci_bounds = c(ci$lower, ci$upper),
+                      capture_mu = c(ci$capture_mu, ci$capture_mu))
+ggplot(data = ci_data, aes(x = ci_bounds, y = ci_id, 
+                           group = ci_id, color = capture_mu)) +
+  geom_point(size = 2) +  # add points at the ends, size = 2
+  geom_line() +           # connect with lines
+  geom_vline(xintercept = params$mu, color = "darkgray") # draw vertical line
+
+#
